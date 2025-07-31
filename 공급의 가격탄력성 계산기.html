@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>공급의 가격탄력성 계산기</title>
+  <style>
+    body {
+      font-family: 'Malgun Gothic', sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+    }
+    .container {
+      max-width: 540px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px #0001;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      font-size: 1em;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      display: block;
+      width: 100%;
+      margin-top: 24px;
+      padding: 10px;
+      font-size: 1.1em;
+      background: #444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #222;
+    }
+    #result {
+      margin-top: 24px;
+      padding: 18px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      font-size: 1.05em;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>공급의 가격탄력성 계산기</h2>
+    <h3>공급함수가 Q = a + b p 일 때</h3>
+
+    <label>상수항 a</label>
+    <input type="number" id="a" placeholder="" />
+
+    <label>일차항의 계수 b </label>
+    <input type="number" id="b" placeholder="" />
+
+    <label>가격 p</label>
+    <input type="number" id="p" placeholder="" />
+
+
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+    <button onclick="calculateSupplyElasticity()">계산하기</button>
+    <button onclick="location.href='index.html'" style="background:#666;">메인으로 돌아가기</button>
+</div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+function calculateSupplyElasticity() {
+  const a = parseFloat(document.getElementById('a').value);
+  const b = parseFloat(document.getElementById('b').value);
+  const pInput = document.getElementById('p').value;
+  const result = document.getElementById('result');
+
+  if (isNaN(a) || isNaN(b) || b === 0) {
+    result.innerText = 'a와 b를 올바르게 입력해주세요. (b ≠ 0)';
+    return;
+  }
+
+  if (!pInput) {
+    result.innerText = '가격 p를 반드시 입력해주세요.';
+    return;
+  }
+
+  const p = parseFloat(pInput);
+  const Q = a + b * p;
+
+  if (Q <= 0) {
+    result.innerText = `가격 p = ${p}에서 Q(p) = ${Q}이므로 유효하지 않은 공급입니다.`;
+    return;
+  }
+
+  const epsilon = Math.abs(b * p / Q);
+  let type = '';
+  if (epsilon > 1) type = '탄력적';
+  else if (epsilon === 1) type = '단위탄력적';
+  else type = '비탄력적';
+
+  result.innerText =
+`입력한 가격 p = ${p}
+공급량 Q(p) = ${Q}
+공급의 가격탄력성 ε_s = |${b} × ${p} / ${Q}| = ${epsilon.toFixed(4)}`;}
+  </script>
+</body>
+</html>

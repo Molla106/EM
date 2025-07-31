@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경제 수학</title>
+    <style>
+        /* 전체 레이아웃 스타일 */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        /* 헤더 스타일 */
+        header {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 네비게이션 스타일 */
+        nav {
+            background-color: #333;
+            padding: 10px;
+            text-align: center;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 18px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #4CAF50;
+        }
+
+        /* 섹션 스타일 */
+        section {
+            padding: 40px;
+            margin: 20px auto;
+            max-width: 900px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        /* 하위 섹션 스타일 */
+        .sub-section {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .sub-section:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .sub-section h3 {
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .sub-section p {
+        color: #666;
+    }
+
+    /* 버튼 스타일 */
+    .sub-section {
+        display: flex; /* 제목과 버튼을 가로로 정렬 */
+        justify-content: space-between; /* 제목과 버튼 사이 간격을 자동으로 조정 */
+        align-items: center; /* 제목과 버튼을 같은 높이에 맞춤 */
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .sub-section:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .sub-section h3 {
+        margin: 0; /* 제목의 여백 제거 */
+        color: #333;
+    }
+
+    .sub-section a {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+    }
+
+    .sub-section a:hover {
+        background-color: #45a049;
+    }
+    </style>
+    <head>
+        ...
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const navLinks = document.querySelectorAll("nav a");
+    
+                navLinks.forEach(link => {
+                    link.addEventListener("click", function (event) {
+                        event.preventDefault(); // 기본 동작 방지
+                        const targetId = this.getAttribute("href").substring(1); // # 제거
+                        const targetSection = document.getElementById(targetId);
+    
+                        if (targetSection) {
+                            window.scrollTo({
+                                top: targetSection.offsetTop - 20, // 약간의 여백 추가
+                                behavior: "smooth" // 부드러운 스크롤
+                            });
+                        }
+                    });
+                });
+            });
+        </script>
+    </head>
+</head>
+<body>
+    <header>
+        <h1>경제 수학</h1>
+    </header>
+    <nav>
+        <a href="#calculators">1. 수와 생활경제</a>
+        <a href="#memorization">2. 수열과 금융</a>
+        <a href="#exam">3. 함수와 경제</a>
+        <a href="#alqns">4. 미분과 경제</a>
+    </nav>
+
+    <!-- 1단원 카테고리 -->
+    <section id="calculators">
+        <h2>환율</h2>
+        <div class="sub-section" id="section1">
+            <h3>환율 계산기</h3>
+            <a href="환율 계산기.html">Open Calc</a>
+        </div>
+        <div class="sub-section" id="section2">
+            <h3>변동 환율 계산기</h3>
+            <a href="변동 환율 계산기.html">Open Calc</a>
+        </div>
+    </section>
+
+    <!--- 2단원 카테고리 --->
+    <section id="memorization">
+        <h2>원리합계와 미래가치</h2>
+        <div class="sub-section" id="section5">
+            <h3>예금 원리합계</h3>
+            <a href="현재가치, 미래가치 계산기.html">Open Calc</a>
+        </div>
+        <div class="sub-section" id="section6">
+            <h3>적금 원리합계(기시급)</h3>
+            <a href="기시급 적금 원리합계.html">Open Calc</a>
+        </div>
+        <div class="sub-section" id="section6">
+            <h3>적금 원리합계(기말급)</h3>
+            <a href="기말급 적금 원리합계.html">Open Calc</a>    
+        </div>
+        <h2>할부금</h2>
+        <div class="sub-section" id="section3">
+            <h3>할부금 계산기</h3>
+            <a href="할부금 계산기.html">Open Calc</a>
+        </div>    
+        <h2>연금</h2>
+        <div class="sub-section" id="section7">
+            <h3>연금 계산기</h3>
+            <a href="연금 계산기.html">Open Calc</a>
+    </section>
+
+    <!-- 3단원 카테고리 -->
+    <section id="exam">
+        <h2>부등식</h2>
+        <div class="sub-section" id="section19">
+            <h3>영역에서 최대 최소</h3>
+            <a href="부등식 영역에서 최대, 최소.html">Open Calc</a>
+        </div>
+    </section>
+
+        <!-- 4단원 카테고리 -->
+    <section id="alqns">
+        <h2>최적생산량</h2>
+        <div class="sub-section" id="section19">
+            <h3>최적생산량과 최대이윤</h3>
+            <a href="최적생산량 및 최대 이윤 계산기.html">Open Calc</a>
+        </div>
+        <h2>가격 탄력성</h2>
+        <div class="sub-section" id="section19">
+            <h3>공급의 가격 탄력성</h3>
+            <a href="공급의 가격탄력성 계산기.html">Open Calc</a>
+        </div>
+            <div class="sub-section" id="section19">
+            <h3>수요의 가격 탄력성</h3>
+            <a href="수요의 가격탄력성 계산기.html">Open Calc</a>
+        </div>
+    </section>
+
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>환율 계산기 </title>
+<style>
+  body {
+    font-family: 'Malgun Gothic', Arial, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 540px;
+    margin: 40px auto 0 auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px #0002;
+    padding: 32px 22px 24px 22px;
+  }
+  h1, h2 {
+    text-align: center;
+    color: #222;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+  label {
+    display: block;
+    margin-top: 13px;
+    font-size: 1.05em;
+    color: #333;
+  }
+  input[type=number], select {
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 1.05em;
+    border: 1.5px solid #b0bec5;
+    border-radius: 7px;
+    margin-top: 4px;
+    background: #f9f9f9;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+  input[type=number]:focus, select:focus {
+    border-color: #888;
+    outline: none;
+    background: #f3f3f3;
+  }
+  button {
+    padding: 10px 25px;
+    font-size: 1.08em;
+    font-weight: bold;
+    color: #fff;
+    background: #444;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px #4442;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 1px;
+    display: block;
+    margin: 0 auto;
+    margin-top: 20px;
+  }
+  button:hover {
+    background: #222;
+    transform: translateY(-2px) scale(1.03);
+  }
+  .result {
+    font-weight: bold;
+    margin-top: 18px;
+    font-size: 1.1em;
+    color: #222;
+    background: #f3f3f3;
+    border-radius: 7px;
+    padding: 13px 0 13px 0;
+    text-align: left;
+    box-shadow: 0 1px 4px #4441;
+    white-space: pre-line;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 18px 0;
+  }
+  @media (max-width: 480px) {
+    .container {
+      max-width: 98vw;
+      padding: 10px 2vw 16px 2vw;
+    }
+    input[type=number], select {
+      width: 98vw;
+      max-width: 98vw;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>환율 계산기</h1>
+
+  <label>환전 방향
+    <select id="direction">
+      <option value="buy">외화를 산다 (원화 → 외화)</option>
+      <option value="sell">외화를 판다 (외화 → 원화)</option>
+    </select>
+  </label>
+
+  <label>입력 기준
+    <select id="inputType" onchange="toggleInput()">
+      <option value="foreign">외화 금액 입력</option>
+      <option value="korean">원화 금액 입력</option>
+    </select>
+  </label>
+
+  <div id="foreignInput">
+    <label>환전할 금액 (외화):
+      <input type="number" id="amountUSD" step="0.01">
+    </label>
+  </div>
+
+  <div id="koreanInput" style="display:none;">
+    <label>환전할 금액 (원화):
+      <input type="number" id="amountKRW" step="1">
+    </label>
+  </div>
+
+  <label>매매기준율 (원/외화):
+    <input type="number" id="baseRate" step="0.01">
+  </label>
+
+  <label>살 때 환율 (원/외화):
+    <input type="number" id="buyRate" step="0.01">
+  </label>
+
+  <label>팔 때 환율 (원/외화):
+    <input type="number" id="sellRate" step="0.01">
+  </label>
+
+  <label>수수료 우대율 (%):
+    <input type="number" id="discountRate" value="0" step="0.1">
+  </label>
+
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+  <button onclick="calculate()">계산하기</button>
+  <button onclick="location.href='index.html'" style="background:#666;">메인으로 돌아가기</button>
+</div>
+
+
+  <div class="result" id="output" style="display:none;"></div>
+
+<script>
+  function toggleInput() {
+    const type = document.getElementById("inputType").value;
+    document.getElementById("foreignInput").style.display = type === "foreign" ? "block" : "none";
+    document.getElementById("koreanInput").style.display = type === "korean" ? "block" : "none";
+  }
+
+  function calculate() {
+    const direction = document.getElementById("direction").value;
+    const inputType = document.getElementById("inputType").value;
+    const baseRate = parseFloat(document.getElementById("baseRate").value);
+    const buyRate = parseFloat(document.getElementById("buyRate").value);
+    const sellRate = parseFloat(document.getElementById("sellRate").value);
+    const discountRate = parseFloat(document.getElementById("discountRate").value);
+    const amountUSD = parseFloat(document.getElementById("amountUSD").value);
+    const amountKRW = parseFloat(document.getElementById("amountKRW").value);
+
+    if (isNaN(baseRate) || isNaN(buyRate) || isNaN(sellRate) || isNaN(discountRate)) {
+      alert("모든 환율 항목을 입력해주세요.");
+      return;
+    }
+
+    let feePerDollar, reducedFee, effectiveRate, finalKRW, finalUSD;
+    let originalFee, discountedFee;
+    let resultHTML = "", directionText = "";
+
+    if (direction === "buy") {
+      feePerDollar = buyRate - baseRate;
+      reducedFee = feePerDollar * (1 - discountRate / 100);
+      effectiveRate = baseRate + reducedFee;
+      directionText = "외화를 사는 경우";
+
+      if (inputType === "foreign" && !isNaN(amountUSD)) {
+        finalKRW = effectiveRate * amountUSD;
+        originalFee = feePerDollar * amountUSD;
+        discountedFee = reducedFee * amountUSD;
+        resultHTML += `<p><strong>&nbsp;&nbsp;외화 ${amountUSD}를 사기 위해 필요한 원화:</strong> ${finalKRW.toLocaleString()}원</p>`;
+        resultHTML += `<p><strong>&nbsp;&nbsp;최종 수수료(우대 적용):</strong> ${discountedFee.toLocaleString()}원</p>`;
+      } else if (inputType === "korean" && !isNaN(amountKRW)) {
+        finalUSD = amountKRW / effectiveRate;
+        originalFee = feePerDollar * finalUSD;
+        discountedFee = reducedFee * finalUSD;
+        resultHTML += `<p><strong>&nbsp;&nbsp;원화 ${amountKRW.toLocaleString()}원으로 환전 가능한 외화:</strong> ${finalUSD.toFixed(2)}외화</p>`;
+        resultHTML += `<p><strong>&nbsp;&nbsp;최종 수수료(우대 적용):</strong> ${discountedFee.toLocaleString()}원</p>`;
+      } else {
+        alert("입력 금액을 확인해주세요.");
+        return;
+      }
+
+    } else if (direction === "sell") {
+      feePerDollar = baseRate - sellRate;
+      reducedFee = feePerDollar * (1 - discountRate / 100);
+      effectiveRate = baseRate - reducedFee;
+      directionText = "외화를 파는 경우";
+
+      if (inputType === "foreign" && !isNaN(amountUSD)) {
+        finalKRW = effectiveRate * amountUSD;
+        originalFee = feePerDollar * amountUSD;
+        discountedFee = reducedFee * amountUSD;
+        resultHTML += `<p><strong>&nbsp;&nbsp;외화 ${amountUSD}를 팔고 받는 원화:</strong> ${finalKRW.toLocaleString()}원</p>`;
+        resultHTML += `<p><strong>&nbsp;&nbsp;최종 수수료:</strong> ${discountedFee.toLocaleString()}원</p>`;
+      } else if (inputType === "korean" && !isNaN(amountKRW)) {
+        finalUSD = amountKRW / effectiveRate;
+        originalFee = feePerDollar * finalUSD;
+        discountedFee = reducedFee * finalUSD;
+        resultHTML += `<p><strong>&nbsp;&nbsp;원화 ${amountKRW.toLocaleString()}원으로 팔아야 할 외화:</strong> ${finalUSD.toFixed(2)}외화</p>`;
+        resultHTML += `<p><strong>&nbsp;&nbsp;최종 수수료:</strong> ${discountedFee.toLocaleString()}원</p>`;
+      } else {
+        alert("입력 금액을 확인해주세요.");
+        return;
+      }
+    }
+
+    // 계산 과정 출력
+let processHTML = "<h2>계산 과정</h2>";
+if (direction === "buy") {
+  processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;수수료 = 살 때 환율 - 매매기준율<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${buyRate} - ${baseRate} = ${feePerDollar.toFixed(2)}원</div>`;
+  processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;우대 적용 후 수수료 = 수수료 × (1 - 우대율/100)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${feePerDollar.toFixed(2)} × (1 - ${discountRate}/100) = ${reducedFee.toFixed(2)}원</div>`;
+  processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;최종 환율 = 매매기준율 + 우대 적용 후 수수료<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${baseRate} + ${reducedFee.toFixed(2)} = ${effectiveRate.toFixed(2)}원/외화</div>`;
+  if (inputType === "foreign" && !isNaN(amountUSD)) {
+    processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;필요한 원화 = 최종 환율 × 외화<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${effectiveRate.toFixed(2)} × ${amountUSD} = ${finalKRW.toLocaleString()}원</div>`;
+    processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;최종 수수료 = 우대 적용 후 수수료 × 환전 금액<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${reducedFee.toFixed(2)} × ${amountUSD} = ${discountedFee.toLocaleString()}원</div>`;
+  } else if (inputType === "korean" && !isNaN(amountKRW)) {
+    processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;가능한 외화 = 원화 ÷ 최종 환율<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${amountKRW.toLocaleString()} ÷ ${effectiveRate.toFixed(2)} = ${finalUSD.toFixed(2)}외화</div>`;
+    processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;최종 수수료 = 우대 적용 후 수수료 × 환전 금액<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${reducedFee.toFixed(2)} × ${finalUSD.toFixed(2)} = ${discountedFee.toLocaleString()}원</div>`;
+  }
+} else if (direction === "sell") {
+  processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;수수료 = 매매기준율 - 팔 때 환율<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${baseRate} - ${sellRate} = ${feePerDollar.toFixed(2)}원</div>`;
+  processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;우대 적용 후 수수료 = 수수료 × (1 - 우대율/100)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${feePerDollar.toFixed(2)} × (1 - ${discountRate}/100) = ${reducedFee.toFixed(2)}원</div>`;
+  processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;최종 환율 = 매매기준율 - 우대 적용 후 수수료<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${baseRate} - ${reducedFee.toFixed(2)} = ${effectiveRate.toFixed(2)}원/외화</div>`;
+  if (inputType === "foreign" && !isNaN(amountUSD)) {
+    processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;받는 원화 = 최종 환율 × 외화<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${effectiveRate.toFixed(2)} × ${amountUSD} = ${finalKRW.toLocaleString()}원</div>`;
+    processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;최종 수수료 = 우대 적용 후 수수료 × 환전 금액<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${reducedFee.toFixed(2)} × ${amountUSD} = ${discountedFee.toLocaleString()}원</div>`;
+  } else if (inputType === "korean" && !isNaN(amountKRW)) {
+    processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;팔아야 할 외화 = 원화 ÷ 최종 환율<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${amountKRW.toLocaleString()} ÷ ${effectiveRate.toFixed(2)} = ${finalUSD.toFixed(2)}외화</div>`;
+    processHTML += `<div style="margin-bottom:30px;">&nbsp;&nbsp;최종 수수료 = 우대 적용 후 수수료 × 환전 금액<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ${reducedFee.toFixed(2)} × ${finalUSD.toFixed(2)} = ${discountedFee.toLocaleString()}원</div>`;
+  }
+}
+
+    const summary = `
+      <h2>계산 결과 (${directionText})</h2>
+      ${resultHTML}
+      ${processHTML}
+    `;
+
+    document.getElementById("output").innerHTML = summary;
+    document.getElementById("output").style.display = "block";
+  }
+</script>
+</body>
+</html>

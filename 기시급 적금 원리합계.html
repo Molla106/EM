@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>기시급 원리합계 계산기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { 
+    font-family: 'Malgun Gothic', Arial, sans-serif; 
+    max-width: 700px; 
+    margin: 20px auto; 
+    padding: 20px;
+    background: #fff;
+  }
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px #0001;
+    padding: 24px 16px 18px 16px;
+  }
+  h2 { 
+    text-align: center; 
+    margin-bottom: 24px;
+    color: #222; /* 파란색 → 진회색 */
+  }
+  fieldset { 
+    margin-bottom: 30px; 
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafbfc;
+    padding: 18px 12px 12px 12px;
+  }
+  legend {
+    font-size: 1.08em;
+    font-weight: bold;
+    color: #222; /* 파란색 → 진회색 */
+    padding: 0 6px;
+  }
+  label { 
+    display: block; 
+    margin: 10px 0 3px; 
+    font-size: 1em;
+    color: #222;
+  }
+  input[type=number] { 
+    width: 180px; 
+    padding: 6px; 
+    font-size: 1rem; 
+    border: 1px solid #b0bec5;
+    border-radius: 5px;
+    background: #f9f9f9;
+    margin-top: 2px;
+  }
+  input[type=number]:focus {
+    border-color: #888; /* 파란색 → 회색 */
+    background: #f3f3f3;
+    outline: none;
+  }
+  input[type=checkbox] {
+    accent-color: #444; /* 파란색 → 회색 */
+    margin-right: 4px;
+    transform: scale(1.1);
+  }
+  .btn-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+  }
+  button { 
+    padding: 10px 25px; 
+    font-size: 1.08em; 
+    font-weight: bold;
+    color: #fff; 
+    background: #444; /* 파란색 → 회색 */
+    border: none; 
+    border-radius: 7px;
+    box-shadow: 0 1px 4px #4442;
+    cursor: pointer; 
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 1px;
+    display: block;
+  }
+  button:hover {
+    background: #222; /* 파란색 → 진회색 */
+    transform: translateY(-2px) scale(1.03);
+  }
+  #result, #result2 { 
+    margin-top: 18px; 
+    font-weight: bold; 
+    font-size: 1.18em; 
+    color: #222; /* 파란색 → 진회색 */
+    background: #f3f3f3;
+    border-radius: 6px;
+    padding: 10px 0;
+    text-align: center;
+    box-shadow: 0 1px 4px #4441;
+  }
+  #process, #process2 {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    padding: 13px 10px;
+    white-space: pre-line;
+    margin-top: 15px;
+    border-radius: 6px;
+    font-size: 1em;
+    color: #444;
+    box-shadow: 0 1px 4px #4441;
+  }
+  @media (max-width: 480px) {
+    .container {
+      max-width: 98vw;
+      padding: 10px 2vw 16px 2vw;
+    }
+    input[type=number] {
+      width: 98vw;
+      max-width: 98vw;
+    }
+  }
+</style>
+  <script>
+    function roundToDigits(num, digits) {
+      const factor = Math.pow(10, digits);
+      return Math.round(num * factor) / factor;
+    }
+
+    function calculateTotal() {
+      const a = parseFloat(document.getElementById('amount').value);
+      const ratePercent = parseFloat(document.getElementById('rate').value);
+      const n = parseInt(document.getElementById('years').value);
+      const useSecondDigit = document.getElementById('roundSecondDigit1').checked;
+      const roundDigits = useSecondDigit ? 2 : 1;
+
+      if (
+        isNaN(a) || a <= 0 ||
+        isNaN(ratePercent) || ratePercent < 0 ||
+        isNaN(n) || n <= 0
+      ) {
+        document.getElementById('result').innerText = '모든 입력값을 올바르게 입력해주세요.';
+        document.getElementById('process').innerText = '';
+        return;
+      }
+
+      const r = ratePercent / 100;
+      const base = 1 + r;
+      const power = Math.pow(base, n);
+
+      const powerRounded = roundToDigits(power, roundDigits);
+      const fraction = (powerRounded - 1) / r;
+      const S = a * fraction * base;
+      const S_rounded = roundToDigits(S, 1);
+
+      let processText =
+`입력값:
+- 매번 입금한 적립액 a = ${a.toLocaleString()} 원
+- 이율 r = ${ratePercent}% → ${r}
+- 적립기간 n = ${n} 
+
+계산 과정:
+1. (1 + r) = ${base}
+2. (1 + r)^n = ${power.toFixed(5)} → ${powerRounded}
+3. ((1 + r)^n - 1) / r = (${powerRounded} - 1) / ${r} = ${fraction.toFixed(5)}
+4. 계산식 적용: S = a × (( (1+r)^n - 1 ) / r ) × (1 + r)
+   = ${a.toLocaleString()} × ${fraction.toFixed(5)} × ${base}
+   = ${S.toFixed(0)}
+
+최종 원리합계: ${S_rounded.toLocaleString()} 원`;
+
+      document.getElementById('result').innerText = `원리합계: ${S_rounded.toLocaleString()} 원`;
+      document.getElementById('process').innerText = processText;
+    }
+
+    // 목표 원리합계로 매년 초 적립액 역계산
+    function calculateMonthly() {
+      const target = parseFloat(document.getElementById('targetSum').value);
+      const ratePercent = parseFloat(document.getElementById('rate2').value);
+      const n = parseInt(document.getElementById('years2').value);
+      const useSecondDigit2 = document.getElementById('roundSecondDigit2').checked;
+      const roundDigits2 = useSecondDigit2 ? 2 : 1;
+
+      if (
+        isNaN(target) || target <= 0 ||
+        isNaN(ratePercent) || ratePercent < 0 ||
+        isNaN(n) || n <= 0
+      ) {
+        document.getElementById('result2').innerText = '모든 입력값을 올바르게 입력해주세요.';
+        document.getElementById('process2').innerText = '';
+        return;
+      }
+
+      const r = ratePercent / 100;
+      const base = 1 + r;
+      const power = Math.pow(base, n);
+      const powerRounded = roundToDigits(power, roundDigits2);
+      const denom = ((powerRounded - 1) / r) * base;
+
+      const a = target / denom;
+      const a_rounded = roundToDigits(a, roundDigits2);
+
+      let processText =
+`입력값:
+- 목표 원리합계 S = ${target.toLocaleString()} 원
+- 이율 r = ${ratePercent}% → ${r}
+- 적립기간 n = ${n} 
+
+계산 과정:
+1. (1 + r) = ${base}
+2. (1 + r)^n = ${power.toFixed(5)} → ${powerRounded}
+3. 분모 계산: ((1 + r)^n - 1) / r × (1 + r) = (${powerRounded} - 1) / ${r} × ${base} = ${denom.toFixed(5)}
+4. 매번 입금할 금액 a = S / 분모 = ${target} / ${denom.toFixed(5)} = ${a.toFixed(roundDigits2)}
+
+최종 매번 입금할 금액 a = ${a_rounded.toLocaleString()} 원`;
+
+      document.getElementById('result2').innerText = `계산된 매번 입금할 금액: ${a_rounded.toLocaleString()} 원`;
+      document.getElementById('process2').innerText = processText;
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2> <기시급 원리합계 계산기> </h2>
+
+    <fieldset>
+      <legend><b>원리합계 계산</b></legend>
+      <label>매번 입금할 금액 (원):
+        <input type="number" id="amount" min="1" step="10000" placeholder="" />
+      </label>
+      <label>이율 (%):
+        <input type="number" id="rate" min="0" step="0.01" placeholder="" />
+      </label>
+      <label>적립기간:
+        <input type="number" id="years" min="1" step="1" placeholder="" />
+      </label>
+      <label>
+        <input type="checkbox" id="roundSecondDigit1" checked />
+    (1+r)<sup>n</sup> 값을 <b>소수 둘째 자리</b>로 반올림<br>
+    <span style="margin-left:22px;">(체크 해제 시 <b>소수 첫째 자리</b> 반올림)
+      <div class="btn-center">
+        <button onclick="calculateTotal()">원리합계 계산하기</button>
+      </div>
+      <div id="result"></div>
+      <pre id="process"></pre>
+    </fieldset>
+
+    <fieldset>
+      <legend><b>목표 원리합계로 적립액 계산</b></legend>
+      <label>목표 원리합계 (원):
+        <input type="number" id="targetSum" min="1" step="10000" placeholder="" />
+      </label>
+      <label>이율 (%):
+        <input type="number" id="rate2" min="0" step="0.01" placeholder="" />
+      </label>
+      <label>적립기간:
+        <input type="number" id="years2" min="1" step="1" placeholder="" />
+      </label>
+      <label>
+        <input type="checkbox" id="roundSecondDigit2" checked />
+    (1+r)<sup>n</sup> 값을 <b>소수 둘째 자리</b>로 반올림<br>
+    <span style="margin-left:22px;">(체크 해제 시 <b>소수 첫째 자리</b> 반올림)
+      </label>
+      <div class="btn-center">
+        <button onclick="calculateMonthly()">매년 초 적립액 계산하기</button>
+      </div>
+      <div id="result2"></div>
+      <pre id="process2"></pre>
+    </fieldset>
+  </div>
+<div class="btn-center" style="margin-top: 32px;">
+  <button type="button" onclick="location.href='index.html'" style="background: #666;">메인으로 돌아가기</button>
+</div>
+
+</body>
+</html>

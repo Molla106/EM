@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>교점 계산기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body {
+    font-family: 'Malgun Gothic', Arial, sans-serif;
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+  }
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px #0001;
+    padding: 24px 16px 18px 16px;
+  }
+  h2 {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #222;
+  }
+  label {
+    display: block;
+    margin: 10px 0 4px;
+    font-size: 0.95em;
+    color: #222;
+  }
+  input[type=text] {
+    width: 100%;
+    max-width: 500px;
+    padding: 6px;
+    font-size: 1rem;
+    border: 1px solid #b0bec5;
+    border-radius: 5px;
+    background: #f9f9f9;
+    margin-top: 2px;
+  }
+  input[type=text]:focus {
+    border-color: #888;
+    background: #f3f3f3;
+    outline: none;
+  }
+  button {
+    padding: 10px 25px;
+    font-size: 1.08em;
+    font-weight: bold;
+    color: #fff;
+    background: #444;
+    border: none;
+    border-radius: 7px;
+    box-shadow: 0 1px 4px #4442;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 1px;
+    display: block;
+    margin: 20px auto 10px;
+  }
+  button:hover {
+    background: #222;
+    transform: translateY(-2px) scale(1.03);
+  }
+  h3 {
+    margin-top: 30px;
+    color: #222;
+    font-size: 1.15em;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+  }
+  .point {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin: 6px 0;
+    font-size: 1em;
+    color: #444;
+    box-shadow: 0 1px 4px #4441;
+  }
+  .highlight {
+    background: #e3f2fd;
+    color: #0d47a1;
+    font-weight: bold;
+  }
+  @media (max-width: 480px) {
+    .container {
+      max-width: 98vw;
+      padding: 10px 2vw 16px 2vw;
+    }
+    input[type=text] {
+      width: 98vw;
+      max-width: 98vw;
+    }
+  }
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <h2>교점 계산기</h2>
+    <h3>부등식을 방정식으로 바꿔서 입력하기<h3>
+    <label>직선 1
+      <input type="text" id="line1" placeholder="">
+    </label>
+<div style="height:16px;"></div>
+    <label>직선 2
+      <input type="text" id="line2" placeholder="">
+    </label>
+<div style="height:16px;"></div>
+    <label>최적화할 식
+      <input type="text" id="objective" placeholder="">
+    </label>
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+  <button onclick="calculate()" style="padding: 8px 20px; font-size: 1.0em; min-width: 140px;">계산하기</button>
+  <button onclick="location.href='index.html'" style="background:#666; padding: 8px 20px; font-size: 1.0em; min-width: 80px;">메인으로 돌아가기</button>
+</div>
+
+
+    <h3>결과</h3>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    function insertMultiplication(str) {
+      return str.replace(/(\d)([xy])/gi, '$1*$2')
+                .replace(/([xy])(\d)/gi, '$1*$2');
+    }
+
+    function parseLine(equation) {
+      const [left, right] = equation.split("=");
+      const expr = insertMultiplication(left + "- (" + right + ")");
+      return new Function("x", "y", `return ${expr}`);
+    }
+
+    function solveSystem(lineFuncs) {
+      let points = [];
+
+      // 기본 경계선
+      const constraints = [
+        (x, y) => x, // x=0
+        (x, y) => y  // y=0
+      ];
+
+      // 가능한 교점
+      const allFuncs = [...lineFuncs, ...constraints];
+      for (let i = 0; i < allFuncs.length; i++) {
+        for (let j = i + 1; j < allFuncs.length; j++) {
+          const f1 = allFuncs[i];
+          const f2 = allFuncs[j];
+          const pt = solveTwoEquations(f1, f2);
+          if (pt && pt.x >= 0 && pt.y >= 0) {
+            points.push(pt);
+          }
+        }
+      }
+
+      return points;
+    }
+
+    function solveTwoEquations(f1, f2) {
+      for (let x = -1000; x <= 1000; x++) {
+        for (let y = -1000; y <= 1000; y++) {
+          if (Math.abs(f1(x, y)) < 1e-6 && Math.abs(f2(x, y)) < 1e-6) {
+            return { x, y };
+          }
+        }
+      }
+      return null;
+    }
+
+    function calculate() {
+      const line1 = document.getElementById("line1").value;
+      const line2 = document.getElementById("line2").value;
+      const objExpr = insertMultiplication(document.getElementById("objective").value);
+      const objective = new Function("x", "y", `return ${objExpr}`);
+
+      const f1 = parseLine(line1);
+      const f2 = parseLine(line2);
+
+      const results = document.getElementById("results");
+      results.innerHTML = "";
+
+      const points = solveSystem([f1, f2]);
+      if (points.length === 0) {
+        results.textContent = "만족하는 교점이 없습니다.";
+        return;
+      }
+
+      const evaluated = points.map(p => ({
+        ...p,
+        value: objective(p.x, p.y)
+      })).sort((a, b) => b.value - a.value);
+
+      evaluated.forEach(pt => {
+        const div = document.createElement("div");
+        div.className = "point";
+        const coordText = `(${pt.x}, ${pt.y}) → 값: ${pt.value}`;
+        if (pt.x !== 0 && pt.y !== 0) div.classList.add("highlight");
+        div.textContent = coordText;
+        results.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>

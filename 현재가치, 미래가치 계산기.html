@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>현재가치 미래가치 계산기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: 'Malgun Gothic', Arial, sans-serif;
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px #0001;
+      padding: 24px 16px 18px 16px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #222;
+    }
+    fieldset {
+      margin-bottom: 30px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fafbfc;
+      padding: 18px 12px 12px 12px;
+    }
+    legend {
+      font-size: 1.08em;
+      font-weight: bold;
+      color: #222;
+      padding: 0 6px;
+    }
+    label {
+      display: block;
+      margin: 10px 0 4px;
+      font-size: 1em;
+      color: #222;
+      cursor: pointer;
+    }
+    input[type=number] {
+      width: 180px;
+      padding: 6px;
+      font-size: 1rem;
+      border: 1px solid #b0bec5;
+      border-radius: 5px;
+      background: #f9f9f9;
+      margin-top: 2px;
+    }
+    input[type=number]:focus {
+      border-color: #888;
+      background: #f3f3f3;
+      outline: none;
+    }
+    input[type=radio], input[type=checkbox] {
+      accent-color: #444;
+      margin-right: 6px;
+      transform: scale(1.1);
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    button {
+      padding: 10px 25px;
+      font-size: 1.08em;
+      font-weight: bold;
+      color: #fff;
+      background: #444;
+      border: none;
+      border-radius: 7px;
+      box-shadow: 0 1px 4px #4442;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      letter-spacing: 1px;
+      display: block;
+      margin: 20px auto 10px;
+    }
+    button:hover {
+      background: #222;
+      transform: translateY(-2px) scale(1.03);
+    }
+    #result {
+      margin-top: 18px;
+      font-weight: bold;
+      font-size: 1.18em;
+      color: #222;
+      background: #f3f3f3;
+      border-radius: 6px;
+      padding: 10px 0;
+      text-align: center;
+      box-shadow: 0 1px 4px #4441;
+      white-space: pre-wrap;
+    }
+    #process {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      padding: 13px 10px;
+      white-space: pre-line;
+      margin-top: 15px;
+      border-radius: 6px;
+      font-size: 1em;
+      color: #444;
+      box-shadow: 0 1px 4px #4441;
+    }
+    /* 체크박스 설명 문구 약간 들여쓰기 */
+    .checkbox-label {
+      margin-left: 28px;
+      font-size: 0.9em;
+      color: #555;
+      display: block;
+      margin-top: 4px;
+      font-weight: normal;
+      cursor: pointer;
+    }
+    @media (max-width: 480px) {
+      .container {
+        max-width: 98vw;
+        padding: 10px 2vw 16px 2vw;
+      }
+      input[type=number] {
+        width: 98vw;
+        max-width: 98vw;
+      }
+    }
+  </style>
+  <script>
+    // 기존 JS 그대로 복사 (생략 가능하면 알려줘)
+    function roundN(v, digits) {
+      const f = Math.pow(10, digits);
+      return Math.round(v * f) / f;
+    }
+
+    function clearOutputs() {
+      document.getElementById('result').innerText = '';
+      document.getElementById('process').innerText = '';
+    }
+
+    function calculate() {
+      let A = parseFloat(document.getElementById('A').value);
+      let S = parseFloat(document.getElementById('S').value);
+      let rPercent = parseFloat(document.getElementById('r').value);
+      let n = parseFloat(document.getElementById('n').value);
+      const type = document.querySelector('input[name="inttype"]:checked').value;
+      const use2 = document.getElementById('round2').checked;
+      const roundDigits = use2 ? 2 : 1;
+
+      let vars = [A, S, rPercent, n];
+      let filled = vars.filter(x => !isNaN(x));
+      if (filled.length !== 3) {
+        alert("A, S, r, n 네 칸 중 반드시 3개만 입력하고 1개는 빈 칸이어야 합니다!");
+        return;
+      }
+
+      let process = '';
+      let r = isNaN(rPercent) ? NaN : rPercent / 100;
+      try {
+        if (type === 'simple') {
+          if (isNaN(A)) {
+            let denom = 1 + r * n;
+            A = S / denom;
+            process =
+`단리 공식: A = S / (1 + r × n)
+입력값: S = ${S}, r = ${r} (${rPercent}%), n = ${n}
+(1 + r × n) = 1 + ${r} × ${n} = ${denom}
+A = ${S} / ${denom} = ${A.toFixed(8)}
+`;
+          } else if (isNaN(S)) {
+            let denom = 1 + r * n;
+            S = A * denom;
+            process =
+`단리 공식: S = A × (1 + r × n)
+입력값: A = ${A}, r = ${r} (${rPercent}%), n = ${n}
+(1 + r × n) = 1 + ${r} × ${n} = ${denom}
+S = ${A} × ${denom} = ${S.toFixed(8)}
+`;
+          } else if (isNaN(r)) {
+            if (n === 0) throw new Error('n=0 불가');
+            r = (S / A - 1) / n;
+            rPercent = r * 100;
+            process =
+`단리 공식: r = (S/A - 1) / n
+입력값: A = ${A}, S = ${S}, n = ${n}
+r = (${S}/${A} - 1) / ${n} = ${r.toFixed(8)} (${rPercent.toFixed(6)}%)
+`;
+          } else if (isNaN(n)) {
+            if (r === 0) throw new Error('r=0 불가');
+            n = (S / A - 1) / r;
+            process =
+`단리 공식: n = (S/A - 1) / r
+입력값: A = ${A}, S = ${S}, r = ${r} (${rPercent}%)
+n = (${S}/${A} - 1) / ${r} = ${n.toFixed(8)}
+`;
+          }
+        } else {
+          if (isNaN(A)) {
+            let power = Math.pow(1 + r, n);
+            let powerRounded = roundN(power, roundDigits);
+            A = S / powerRounded;
+            process =
+`복리 공식: A = S / (1 + r)^n
+입력값: S = ${S}, r = ${r} (${rPercent}%), n = ${n}
+(1 + r)^n = (1 + ${r}) ^ ${n} = ${power.toFixed(8)}
+반올림 → 소수 ${roundDigits}째 자리: ${powerRounded}
+A = ${S} / ${powerRounded} = ${A.toFixed(8)}
+`;
+          } else if (isNaN(S)) {
+            let power = Math.pow(1 + r, n);
+            let powerRounded = roundN(power, roundDigits);
+            S = A * powerRounded;
+            process =
+`복리 공식: S = A × (1 + r)^n
+입력값: A = ${A}, r = ${r} (${rPercent}%), n = ${n}
+(1 + r)^n = (1 + ${r}) ^ ${n} = ${power.toFixed(8)}
+반올림 → 소수 ${roundDigits}째 자리: ${powerRounded}
+S = ${A} × ${powerRounded} = ${S.toFixed(8)}
+`;
+          } else if (isNaN(r)) {
+            if (A === 0) throw new Error('A=0 불가');
+            let base = S / A;
+            let power = 1 / n;
+            let root = Math.pow(base, power);
+            r = root - 1;
+            rPercent = r * 100;
+            process =
+`복리 공식: r = (S/A)^{1/n} - 1
+입력값: S = ${S}, A = ${A}, n = ${n}
+(S/A)^{1/n} = (${S}/${A}) ^ (1/${n}) = ${root.toFixed(8)}
+r = ${root.toFixed(8)} - 1 = ${r.toFixed(8)} (${rPercent.toFixed(5)}%)
+`;
+          } else if (isNaN(n)) {
+            if (A === 0 || (1 + r) <= 0) throw new Error('A=0 또는 1+r<=0 불가');
+            n = Math.log(S / A) / Math.log(1 + r);
+            process =
+`복리 공식: n = ln(S/A) / ln(1 + r)
+입력값: S = ${S}, A = ${A}, r = ${r} (${rPercent}%)
+ln(S/A) = ln(${S}/${A}) = ${Math.log(S / A).toFixed(8)}
+ln(1 + r) = ln(1 + ${r}) = ${Math.log(1 + r).toFixed(8)}
+n = ln(S/A) / ln(1 + r) = ${n.toFixed(8)}
+`;
+          }
+        }
+
+        let res = `계산 결과:
+현재가치 A = ${isNaN(A) ? '-' : A.toFixed(8)}
+미래가치 S = ${isNaN(S) ? '-' : S.toFixed(8)}
+이자율 r = ${isNaN(rPercent) ? '-' : rPercent.toFixed(6)}%
+기간 n = ${isNaN(n) ? '-' : n.toFixed(8)}년
+`;
+
+        document.getElementById('result').innerText = res;
+        document.getElementById('process').innerText = process;
+
+      } catch(e) {
+        alert('계산 오류: ' + e.message);
+        document.getElementById('result').innerText = '';
+        document.getElementById('process').innerText = '';
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>현재가치 미래가치 계산기</h2>
+
+    <fieldset>
+      <legend>이자 방식 선택</legend>
+      <label><input type="radio" name="inttype" value="simple" checked /> 단리</label>
+      <label><input type="radio" name="inttype" value="compound" /> 복리</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>값 입력</legend>
+      <label for="A">현재가치 A:
+        <input type="number" id="A" min="0" step="0.0001" oninput="clearOutputs()" />
+      </label>
+      <label for="S">미래가치 S:
+        <input type="number" id="S" min="0" step="0.0001" oninput="clearOutputs()" />
+      </label>
+      <label for="r">이자율(할인율) r (%):
+        <input type="number" id="r" min="0" step="0.0001" oninput="clearOutputs()" />
+      </label>
+      <label for="n">기간 n :
+        <input type="number" id="n" min="0.0001" step="0.0001" oninput="clearOutputs()" />
+      </label>
+    </fieldset>
+
+    <label>
+      <input type="checkbox" id="round2" checked />
+      <b>복리 계산 시</b> (1+r)<sup>n</sup> 값을 <b>소수 둘째 자리</b>로 반올림
+    </label>
+    <span class="checkbox-label">(체크 해제 시 <b>소수 첫째 자리</b> 반올림)</span>
+
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+  <button onclick="calculate()">계산하기</button>
+  <button onclick="location.href='index.html'" style="background:#666;">메인으로 돌아가기</button>
+</div>
+
+
+    <div id="result"></div>
+    <pre id="process"></pre>
+  </div>
+</body>
+</html>

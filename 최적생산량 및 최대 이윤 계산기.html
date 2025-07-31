@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>최적생산량 및 최대 이윤 계산기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: 'Malgun Gothic', Arial, sans-serif;
+      background: #fff;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 540px;
+      margin: 40px auto 0 auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px #0002;
+      padding: 32px 22px 24px 22px;
+    }
+    h2 {
+      text-align: center;
+      color: #222;
+      margin-bottom: 28px;
+      letter-spacing: 1px;
+    }
+    fieldset {
+      border: none;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px #b0bec540;
+      background: #fafbfc;
+      margin-bottom: 28px;
+      padding: 22px 18px 18px 18px;
+      position: relative;
+    }
+    legend {
+      font-size: 1.08em;
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 10px;
+      padding: 0 8px;
+    }
+    label {
+      display: block;
+      margin-top: 13px;
+      font-size: 1.05em;
+      color: #333;
+    }
+    input[type=text], input[type=number] {
+      width: 100%;
+      max-width: 500px;
+      padding: 7px 10px;
+      font-size: 1.05em;
+      border: 1.5px solid #b0bec5;
+      border-radius: 7px;
+      margin-top: 4px;
+      background: #f9f9f9;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    input[type=text]:focus, input[type=number]:focus {
+      border-color: #888;
+      outline: none;
+      background: #f3f3f3;
+    }
+    input[type=checkbox] {
+      accent-color: #444;
+      margin-right: 5px;
+      transform: scale(1.1);
+    }
+    .radio-group {
+      text-align: center;
+      margin-bottom: 28px;
+      user-select: none;
+    }
+    .radio-group label {
+      margin: 8 14px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1.1em;
+      color: #333;
+    }
+    button {
+      padding: 10px 25px;
+      font-size: 1.08em;
+      font-weight: bold;
+      color: #fff;
+      background: #444;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px #4442;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      letter-spacing: 1px;
+      display: block;
+      margin: 20px auto 10px auto;
+      max-width: 240px;
+    }
+    button:hover {
+      background: #222;
+      transform: translateY(-2px) scale(1.03);
+    }
+    #result, #maxProfitResult {
+      font-weight: bold;
+      margin-top: 18px;
+      font-size: 1.1em;
+      color: #222;
+      background: #f3f3f3;
+      border-radius: 7px;
+      padding: 13px 16px;
+      text-align: left;
+      box-shadow: 0 1px 4px #4441;
+      white-space: pre-line;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #process {
+      white-space: pre-line;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin-top: 10px;
+      color: #444;
+      font-size: 0.95em;
+      box-shadow: 0 1px 4px #4441;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hidden {
+      display: none;
+    }
+    @media (max-width: 480px) {
+      .container {
+        max-width: 98vw;
+        padding: 24px 4vw 24px 4vw;
+      }
+      input[type=text], input[type=number] {
+        width: 100%;
+        max-width: 100%;
+      }
+      #result, #maxProfitResult, #process {
+        max-width: 100%;
+      }
+      button {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>최적생산량 및 최대 이윤 계산기</h2>
+
+    <div class="radio-group">
+      <label><input type="radio" name="mode" value="trtc" checked> TR, TC가 주어졌을 때</label>
+
+      <label><input type="radio" name="mode" value="demandtc"> 수요함수 Q, TC가 주어졌을 때</label>
+    </div>
+
+    <!-- TR, TC 입력 영역 -->
+    <fieldset id="trtcInputs">
+      <legend>TR, TC 입력</legend>
+      <label>총수입 함수 TR(Q) 입력:
+        <input type="text" id="trFunc" placeholder="" />
+      </label>
+
+      <label>총비용 함수 TC(Q) 입력:
+        <input type="text" id="tcFunc" placeholder="" />
+      </label>
+    </fieldset>
+
+    <!-- 수요함수, TC 입력 영역 -->
+    <fieldset id="demandtcInputs" class="hidden">
+      <legend>수요함수 Q = a + b p, TC 입력</legend>
+      <label>a 값 입력:
+        <input type="text" id="aValue" placeholder="" />
+      </label>
+
+      <label>b 값 입력:
+        <input type="text" id="bValue" placeholder="" />
+      </label>
+
+      <label>총비용 함수 TC(Q) 입력:
+        <input type="text" id="tcFunc_demandtc" placeholder="" />
+      </label>
+    </fieldset>
+
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+    <button id="calcBtn">계산하기</button>
+    <button onclick="location.href='index.html'" style="background:#666;">메인으로 돌아가기</button>
+</div>
+
+
+
+    <div id="result"></div>
+    <div id="maxProfitResult"></div>
+    <pre id="process"></pre>
+  </div>
+
+<script>
+  // 계산 스크립트 (기존 코드 유지)
+
+  const modeRadios = document.querySelectorAll('input[name="mode"]');
+  const trtcInputs = document.getElementById('trtcInputs');
+  const demandtcInputs = document.getElementById('demandtcInputs');
+  const calcBtn = document.getElementById('calcBtn');
+  const resultDiv = document.getElementById('result');
+  const maxProfitDiv = document.getElementById('maxProfitResult');
+  const processPre = document.getElementById('process');
+
+  modeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        if (radio.value === 'trtc') {
+          trtcInputs.classList.remove('hidden');
+          demandtcInputs.classList.add('hidden');
+          clearResults();
+        } else {
+          trtcInputs.classList.add('hidden');
+          demandtcInputs.classList.remove('hidden');
+          clearResults();
+        }
+      }
+    });
+  });
+
+  function clearResults() {
+    resultDiv.textContent = '';
+    maxProfitDiv.textContent = '';
+    processPre.textContent = '';
+  }
+
+  function convertExpression(str) {
+    while (str.match(/\^/)) {
+      str = str.replace(/(\w+)\^(\d+)/g, '$1**$2');
+    }
+    str = str.replace(/(\d)([a-zA-Z])/g, '$1*$2');
+    str = str.replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
+    return str;
+  }
+
+  function parsePolynomial(expr) {
+    const maxDegree = 10;
+    let coeffs = Array(maxDegree+1).fill(0);
+    let fStr = expr.replace(/Q/g, 'x');
+    try {
+      const f = new Function('x', `return ${fStr}`);
+      const points = [];
+      for(let i=0;i<=maxDegree;i++) {
+        points.push([i, f(i)]);
+      }
+
+      function solveLinearSystem(matrix, vector) {
+        let n = vector.length;
+        let M = matrix.map(row => row.slice());
+        let v = vector.slice();
+        for(let i=0; i<n; i++) {
+          if(M[i][i]===0) {
+            for(let k=i+1; k<n; k++) {
+              if(M[k][i]!==0) {
+                [M[i], M[k]] = [M[k], M[i]];
+                [v[i], v[k]] = [v[k], v[i]];
+                break;
+              }
+            }
+          }
+          let diag = M[i][i];
+          if(diag === 0) return null;
+          for(let j=i; j<n; j++) {
+            M[i][j] /= diag;
+          }
+          v[i] /= diag;
+          for(let k=i+1; k<n; k++) {
+            let factor = M[k][i];
+            for(let j=i; j<n; j++) {
+              M[k][j] -= factor * M[i][j];
+            }
+            v[k] -= factor * v[i];
+          }
+        }
+        let x = Array(n).fill(0);
+        for(let i=n-1; i>=0; i--) {
+          x[i] = v[i];
+          for(let j=i+1; j<n; j++) {
+            x[i] -= M[i][j]*x[j];
+          }
+        }
+        return x;
+      }
+
+      const matrix = points.map(([x,_]) => {
+        const row = [];
+        for(let i=0; i<=maxDegree; i++) {
+          row.push(Math.pow(x,i));
+        }
+        return row;
+      });
+      const vector = points.map(p => p[1]);
+      const solution = solveLinearSystem(matrix, vector);
+      if(solution === null) return null;
+      for(let i=0; i<solution.length; i++) {
+        if(Math.abs(solution[i]) < 1e-8) solution[i] = 0;
+      }
+      return solution;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function differentiate(coeffs) {
+    const deg = coeffs.length -1;
+    const deriv = [];
+    for(let i=1; i<=deg; i++) {
+      deriv.push(i*coeffs[i]);
+    }
+    return deriv;
+  }
+
+  function polyEval(coeffs, x) {
+    let sum = 0;
+    for(let i=0; i<coeffs.length; i++) {
+      sum += coeffs[i]*Math.pow(x,i);
+    }
+    return sum;
+  }
+
+  function findRoots(coeffs) {
+    const roots = [];
+    const maxIter = 100;
+    const tol = 1e-7;
+    function f(x) { return polyEval(coeffs, x); }
+    const derivCoeffs = differentiate(coeffs);
+    function fPrime(x) { return polyEval(derivCoeffs, x); }
+    const initialGuesses = [0, 0.5, 1, 2, 5, 10, 20, 50, 100];
+    function newtonRoot(x0) {
+      let x = x0;
+      for(let i=0; i<maxIter; i++) {
+        const y = f(x);
+        const yPrime = fPrime(x);
+        if(Math.abs(yPrime) < 1e-10) break;
+        const xNew = x - y/yPrime;
+        if(Math.abs(xNew - x) < tol) return xNew;
+        x = xNew;
+      }
+      return null;
+    }
+    initialGuesses.forEach(x0 => {
+      let r = newtonRoot(x0);
+      if(r !== null && !roots.some(root => Math.abs(root - r) < 1e-5)) {
+        roots.push(r);
+      }
+    });
+    return roots.filter(r => r >= 0);
+  }
+
+  function parseFraction(input) {
+    if (!input) return NaN;
+    if (input.includes('/')) {
+      const parts = input.split('/');
+      if(parts.length !== 2) return NaN;
+      const numerator = parseFloat(parts[0]);
+      const denominator = parseFloat(parts[1]);
+      if (isNaN(numerator) || isNaN(denominator) || denominator === 0) return NaN;
+      return numerator / denominator;
+    }
+    const num = parseFloat(input);
+    return isNaN(num) ? NaN : num;
+  }
+
+  function calculateByTRTC() {
+    const rawTR = document.getElementById('trFunc').value.trim();
+    const rawTC = document.getElementById('tcFunc').value.trim();
+
+    if(!rawTR || !rawTC) {
+      resultDiv.textContent = '총수입 함수와 총비용 함수를 모두 입력하세요.';
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    const trExpr = convertExpression(rawTR);
+    const tcExpr = convertExpression(rawTC);
+
+    const trCoeffs = parsePolynomial(trExpr);
+    const tcCoeffs = parsePolynomial(tcExpr);
+
+    if(!trCoeffs || !tcCoeffs) {
+      resultDiv.textContent = '함수 계수 추출 실패: 다항식 형태인지 확인하세요.';
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    const piCoeffs = trCoeffs.map((v,i) => v - (tcCoeffs[i]||0));
+    const dpiCoeffs = differentiate(piCoeffs);
+    const roots = findRoots(dpiCoeffs);
+
+    if(roots.length === 0) {
+      resultDiv.textContent = "미분 방정식 π'(Q)=0 의 양수 근이 없습니다.";
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    const d2piCoeffs = differentiate(dpiCoeffs);
+    let maxQ = null;
+    let maxProfit = -Infinity;
+    for(const r of roots) {
+      const secondDeriv = polyEval(d2piCoeffs, r);
+      if(secondDeriv < 0) {
+        const profitVal = polyEval(piCoeffs, r);
+        if(profitVal > maxProfit) {
+          maxProfit = profitVal;
+          maxQ = r;
+        }
+      }
+    }
+
+    if(maxQ === null) {
+      resultDiv.textContent = '극댓값을 찾을 수 없습니다.';
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    resultDiv.textContent = `최적 생산량 Q*: ${maxQ.toFixed(4)}`;
+    maxProfitDiv.textContent = `최대 이윤 π(Q*): ${maxProfit.toFixed(4)}`;
+    processPre.textContent =
+`입력한 함수:
+- 총수입 TR(Q) = ${rawTR}
+- 총비용 TC(Q) = ${rawTC}
+
+π(Q) = TR(Q) - TC(Q) 다항식으로 변환 후 미분하여 π'(Q) = 0 근을 구함
+찾은 양수 근들: ${roots.map(x => x.toFixed(4)).join(', ')}
+
+2차 미분 값이 음수인 근(극댓값 후보) 중 최대 이윤 계산
+최적 생산량 Q* ≈ ${maxQ.toFixed(6)}
+최대 이윤 π(Q*) ≈ ${maxProfit.toFixed(6)}`;
+  }
+
+  function calculateByDemandTC() {
+    const aRaw = document.getElementById('aValue').value.trim();
+    const bRaw = document.getElementById('bValue').value.trim();
+    const rawTC = document.getElementById('tcFunc_demandtc').value.trim();
+
+    if (!aRaw || !bRaw || !rawTC) {
+      resultDiv.textContent = 'a, b 값을 입력하고 총비용 함수를 입력하세요.';
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    const a = parseFraction(aRaw);
+    if (isNaN(a)) {
+      resultDiv.textContent = 'a 값을 숫자 또는 분수로 정확히 입력하세요.';
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    const bNum = parseFraction(bRaw);
+    if (isNaN(bNum) || bNum === 0) {
+      resultDiv.textContent = 'b 값을 숫자 또는 분수로 정확히 입력하세요. 0이 될 수 없습니다.';
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    let invBStr;
+    if (bRaw.includes('/')) {
+      invBStr = `1/(${bRaw})`;
+    } else {
+      invBStr = (1 / bNum).toString();
+    }
+
+    const trExpr = `(${invBStr})*(Q**2 - ${a}*Q)`;
+    const tcExpr = rawTC;
+
+    const trStr = convertExpression(trExpr);
+    const tcStr = convertExpression(tcExpr);
+
+    const trCoeffs = parsePolynomial(trStr);
+    const tcCoeffs = parsePolynomial(tcStr);
+
+    if (!trCoeffs || !tcCoeffs) {
+      resultDiv.textContent = '함수 계수 추출 실패: 다항식 형태인지 확인하세요.';
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    const piCoeffs = trCoeffs.map((v,i) => v - (tcCoeffs[i]||0));
+    const dpiCoeffs = differentiate(piCoeffs);
+    const roots = findRoots(dpiCoeffs);
+
+    if(roots.length === 0) {
+      resultDiv.textContent = "미분 방정식 π'(Q)=0 의 양수 근이 없습니다.";
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    const d2piCoeffs = differentiate(dpiCoeffs);
+    let maxQ = null;
+    let maxProfit = -Infinity;
+    for(const r of roots) {
+      const secondDeriv = polyEval(d2piCoeffs, r);
+      if(secondDeriv < 0) {
+        const profitVal = polyEval(piCoeffs, r);
+        if(profitVal > maxProfit) {
+          maxProfit = profitVal;
+          maxQ = r;
+        }
+      }
+    }
+
+    if(maxQ === null) {
+      resultDiv.textContent = '극댓값을 찾을 수 없습니다.';
+      maxProfitDiv.textContent = '';
+      processPre.textContent = '';
+      return;
+    }
+
+    resultDiv.textContent = `최적 생산량 Q*: ${maxQ.toFixed(4)}`;
+    maxProfitDiv.textContent = `최대 이윤 π(Q*): ${maxProfit.toFixed(4)}`;
+
+    processPre.textContent =
+`입력한 값:
+- a = ${a}, b = ${bRaw}
+- 총비용 TC(Q) = ${rawTC}
+
+가격 함수: p = (Q - ${a}) × ${invBStr}
+총수입 함수 TR(Q) = (${invBStr}) * (Q^2 - ${a}Q) = ${trExpr}
+
+π(Q) = TR(Q) - TC(Q)
+π'(Q) = 0 의 양수 근: ${roots.map(x => x.toFixed(4)).join(', ')}
+
+2차 미분이 음수인 극댓값에서 계산한 결과:
+최적 생산량 Q* ≈ ${maxQ.toFixed(6)}
+최대 이윤 π(Q*) ≈ ${maxProfit.toFixed(6)}`;
+  }
+
+  calcBtn.addEventListener('click', () => {
+    clearResults();
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    if(mode === 'trtc') {
+      calculateByTRTC();
+    } else {
+      calculateByDemandTC();
+    }
+  });
+
+</script>
+</body>
+</html>

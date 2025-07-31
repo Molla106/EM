@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>할부금 계산기</title>
+  <style>
+  body {
+    font-family: 'Malgun Gothic', Arial, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 540px;
+    margin: 40px auto 0 auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px #0002;
+    padding: 32px 22px 24px 22px;
+  }
+  h2 {
+    text-align: center;
+    color: #222;
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+  }
+  fieldset {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px #b0bec540;
+    background: #fafbfc;
+    margin-bottom: 28px;
+    padding: 22px 18px 18px 18px;
+    position: relative;
+  }
+  legend {
+    font-size: 1.08em;
+    font-weight: bold;
+    color: #222;
+    margin-bottom: 10px;
+    padding: 0 8px;
+  }
+  label {
+    display: block;
+    margin-top: 13px;
+    font-size: 1.05em;
+    color: #333;
+  }
+  input[type=number] {
+    width: 180px;
+    padding: 7px 10px;
+    font-size: 1.05em;
+    border: 1.5px solid #b0bec5;
+    border-radius: 7px;
+    margin-top: 4px;
+    background: #f9f9f9;
+    transition: border-color 0.2s;
+  }
+  input[type=number]:focus {
+    border-color: #888;
+    outline: none;
+    background: #f3f3f3;
+  }
+  input[type=checkbox] {
+    accent-color: #444;
+    margin-right: 5px;
+    transform: scale(1.1);
+  }
+  .btn-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+  }
+  button {
+    padding: 10px 25px;
+    font-size: 1.08em;
+    font-weight: bold;
+    color: #fff;
+    background: #444;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px #4442;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 1px;
+    display: block;
+    margin: 0 auto;
+    margin-top: 20px;
+  }
+  button:hover {
+    background: #222;
+    transform: translateY(-2px) scale(1.03);
+  }
+  #result {
+    font-weight: bold;
+    margin-top: 18px;
+    font-size: 1.1em;
+    color: #222;
+    background: #f3f3f3;
+    border-radius: 7px;
+    padding: 13px 0 13px 0;
+    text-align: left;
+    box-shadow: 0 1px 4px #4441;
+    white-space: pre-line;
+  }
+  @media (max-width: 480px) {
+    .container {
+      max-width: 98vw;
+      padding: 10px 2vw 16px 2vw;
+    }
+    input[type=number] {
+      width: 98vw;
+      max-width: 98vw;
+    }
+  }
+  </style>
+  <script>
+    function roundN(value, digits) {
+      const factor = Math.pow(10, digits);
+      return Math.round(value * factor) / factor;
+    }
+
+    function calculateInstallment() {
+      const PV = parseFloat(document.getElementById('presentValue').value);
+      const rPercent = parseFloat(document.getElementById('interestRate').value);
+      const n = parseInt(document.getElementById('period').value);
+      const useSecondDigit = document.getElementById('roundSecondDigit').checked;
+      const roundDigits = useSecondDigit ? 2 : 1;
+
+      if (
+        isNaN(PV) || PV <= 0 ||
+        isNaN(rPercent) || rPercent < 0 ||
+        isNaN(n) || n <= 0
+      ) {
+        alert('모든 입력값을 올바르게 입력해주세요. (현재 가격, 이율, 기간)');
+        return;
+      }
+
+      const r = rPercent / 100;
+      const base = 1 + r;
+      const powerExact = Math.pow(base, n);
+      const powerRounded = roundN(powerExact, roundDigits);
+
+      // 1. 미래가치 계산 (복리)
+      const FV_exact = PV * powerExact;
+      const FV_rounded = PV * powerRounded;
+
+      // 2. 기말급 원리합계 적립금 계산
+      // 목표 원리합계 S = FV_rounded
+      // a = S r / ((1+r)^n - 1)
+
+      const denominator = powerRounded - 1;
+      if (denominator === 0) {
+        alert('계산 중 오류 발생: (1 + r)^n - 1 값이 0입니다.');
+        return;
+      }
+      const installmentExact = (FV_rounded * r) / denominator;
+      const installmentRounded = roundN(installmentExact, 1);
+
+      // 계산 과정 문자열 구성
+      let processText = 
+`[1] 미래가치 계산
+- 현재가치 = ${PV.toLocaleString()} 원
+- 연이율(r) = ${rPercent}% (${r})
+- 기간(n) = ${n}
+- (1 + r)^n 값 계산 = ${powerExact.toFixed(8)}
+- 반올림 적용 (소수점 ${roundDigits}째 자리) = ${powerRounded}
+
+→ 미래가치 = 현재가치 × (1 + r)^n
+   = ${PV.toLocaleString()} × ${powerRounded}
+   = ${FV_rounded.toLocaleString(undefined, {maximumFractionDigits: 0})} 원
+
+[2] 할부금 계산
+- 목표 금액 S = 미래가치 = ${FV_rounded.toLocaleString(undefined, {maximumFractionDigits: 0})} 원
+- 이율 r = ${rPercent}%, 기간 n = ${n}
+- 공식: a = S × r / ((1 + r)^n - 1)
+- 분모 (1+r)^n - 1 = ${powerRounded} - 1 = ${denominator.toFixed(8)}
+
+→ 매번 상환금(적립금) a = ${FV_rounded.toLocaleString(undefined, {maximumFractionDigits: 0})} × ${r} ÷ ${denominator.toFixed(8)} 
+   = ${installmentExact.toFixed(4)} 원
+
+
+최종 매번 상환금 a = ${installmentRounded.toLocaleString()} 원
+`;
+
+      // 결과 화면 출력
+      const resultDiv = document.getElementById('result');
+
+      resultDiv.innerText = processText;
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>할부금 계산기</h2>
+    <fieldset>
+      <legend>값 입력</legend>
+      <label>
+        현재 가격 (현재가치):
+        <input type="number" id="presentValue" min="1" step="1000" placeholder="" />
+      </label>
+      <label>
+        이율(%) :
+        <input type="number" id="interestRate" min="0" step="0.01" placeholder="" />
+      </label>
+      <label>
+        할부 기간 :
+        <input type="number" id="period" min="1" step="1" placeholder="" />
+      </label>
+      <label>
+        <input type="checkbox" id="roundSecondDigit" checked />
+    (1+r)<sup>n</sup> 값을 <b>소수 둘째 자리</b>로 반올림<br>
+    <span style="margin-left:22px;">(체크 해제 시 <b>소수 첫째 자리</b> 반올림)</span>      </label>
+    </fieldset>
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+    <button onclick="calculateInstallment()">할부금 계산하기</button>
+  <button onclick="location.href='index.html'" style="background:#666;">메인으로 돌아가기</button>
+</div>
+
+
+    <pre id="result"></pre>
+  </div>
+</body>
+</html>

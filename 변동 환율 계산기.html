@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>변동 환율 계산기</title>
+  <style>
+    body {
+      font-family: 'Malgun Gothic', Arial, sans-serif;
+      background: #fff;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+    .container {
+      max-width: 540px;
+      margin: 40px auto 0 auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px #0002;
+      padding: 32px 22px 24px 22px;
+      box-sizing: border-box;
+    }
+    h2 {
+      text-align: center;
+      color: #222;
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+    fieldset {
+      border: 1.5px solid #b0bec5;
+      border-radius: 12px;
+      background: #fafbfc;
+      padding: 18px 14px 20px 14px;
+      margin-bottom: 32px;
+    }
+    legend {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #222;
+      padding: 0 8px;
+    }
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-size: 1.05em;
+      color: #333;
+    }
+    input[type=number], input[type=radio] {
+      font-size: 1.05em;
+    }
+    input[type=number] {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1.5px solid #b0bec5;
+      border-radius: 7px;
+      background: #f9f9f9;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+      margin-top: 4px;
+    }
+    input[type=number]:focus {
+      border-color: #888;
+      outline: none;
+      background: #f3f3f3;
+    }
+    input[type=radio] {
+      margin-right: 8px;
+      transform: scale(1.2);
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    button {
+      padding: 10px 25px;
+      font-size: 1.08em;
+      font-weight: bold;
+      color: #fff;
+      background: #444;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px #4442;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      letter-spacing: 1px;
+      display: block;
+      margin: 0 auto;
+      margin-top: 20px;
+      user-select: none;
+    }
+    button:hover {
+      background: #222;
+      transform: translateY(-2px) scale(1.03);
+    }
+    #result, #process {
+      background: #f3f3f3;
+      border-radius: 7px;
+      box-shadow: 0 1px 4px #4441;
+      padding: 13px 16px;
+      margin-top: 18px;
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #222;
+      white-space: pre-line;
+      min-height: 90px;
+      text-align: left;
+      font-family: 'Malgun Gothic', Arial, sans-serif, monospace;
+    }
+    @media (max-width: 480px) {
+      .container {
+        max-width: 98vw;
+        padding: 20px 6vw 24px 6vw;
+      }
+      input[type=number] {
+        width: 98vw;
+        max-width: 98vw;
+      }
+    }
+  </style>
+  <script>
+    function showForm() {
+      const type = document.querySelector('input[name="calcType"]:checked').value;
+      if (type === 'type1') {
+        document.getElementById('formType1').style.display = 'block';
+        document.getElementById('formType2').style.display = 'none';
+        clearOutputs();
+      } else {
+        document.getElementById('formType1').style.display = 'none';
+        document.getElementById('formType2').style.display = 'block';
+        clearOutputs();
+      }
+    }
+
+    function clearOutputs() {
+      document.getElementById('result').innerText = '';
+      document.getElementById('process').innerText = '';
+    }
+
+    function calculateType1() {
+      const prevRate = parseFloat(document.getElementById('prevRate1').value);
+      const unitPrice = parseFloat(document.getElementById('unitPrice').value);
+      const oldQty = parseFloat(document.getElementById('oldQty').value);
+      const newRate = parseFloat(document.getElementById('newRate1').value);
+
+      if (
+        isNaN(prevRate) || prevRate <= 0 ||
+        isNaN(unitPrice) || unitPrice <= 0 ||
+        isNaN(oldQty) || oldQty <= 0 ||
+        isNaN(newRate) || newRate <= 0
+      ) {
+        alert('모든 입력값을 올바르게 입력해주세요. (기존 환율, 1개당 가격, 기존 구매량, 새로운 환율)');
+        return;
+      }
+
+      const totalForeign = unitPrice * oldQty;
+      const totalKRW = prevRate * totalForeign;
+      const newQtyExact = totalKRW / (newRate * unitPrice);
+      const newQtyRounded = Math.floor(newQtyExact);
+
+      const processText =
+`입력값
+- 1개당 가격 (외화 단위): ${unitPrice.toLocaleString()}
+- 기존 구매 개수: ${oldQty.toLocaleString()} 개
+- 기존 환율: ${prevRate.toLocaleString()} 원
+- 새로운 환율: ${newRate.toLocaleString()} 원
+
+계산
+- 총 외화 금액 = 1개당 가격 × 기존 구매 개수 
+              = ${unitPrice.toLocaleString()} × ${oldQty.toLocaleString()} = ${totalForeign.toLocaleString()}
+              
+- 원화 총 비용 = 기존 환율 × 총 외화 금액
+              = ${prevRate.toLocaleString()} × ${totalForeign.toLocaleString()} = ${totalKRW.toLocaleString()} 원
+
+- 새로운 환율에서 구매 가능한 개수 
+  = 원화 총 비용 ÷ (새 환율 × 1개당 가격)
+  = ${totalKRW.toLocaleString()} ÷ (${newRate.toLocaleString()} × ${unitPrice.toLocaleString()}) 
+  = ${newQtyExact.toFixed(4)}
+
+→ 최종 구매 가능 개수 = ${newQtyRounded} 개
+`;
+      document.getElementById('process').innerText = processText;
+    }
+
+    function calculateType2() {
+      const origRate = parseFloat(document.getElementById('origRate2').value);
+      const foreignAmt = parseFloat(document.getElementById('foreignAmt').value);
+      const newRate = parseFloat(document.getElementById('newRate2').value);
+
+      if (
+        isNaN(origRate) || origRate <= 0 ||
+        isNaN(foreignAmt) || foreignAmt <= 0 ||
+        isNaN(newRate) || newRate <= 0
+      ) {
+        alert('모든 입력값을 올바르게 입력해주세요. (기존 환율, 외화 금액, 새로운 환율)');
+        return;
+      }
+
+      const origKRW = origRate * foreignAmt;
+      const newKRW = newRate * foreignAmt;
+
+      const diff = newKRW - origKRW;
+      const diffSign = diff > 0 ? '+' : (diff < 0 ? '-' : '±');
+      const diffAbs = Math.abs(diff);
+      const diffPercent = (diff / origKRW) * 100;
+
+      const processText =
+`입력값
+- 외화 금액: ${foreignAmt.toLocaleString()}
+- 기존 환율: ${origRate.toLocaleString()} 원
+- 새로운 환율: ${newRate.toLocaleString()} 원
+
+계산
+- 기존 원화 환산 금액 = 기존 환율 × 외화 금액
+                   = ${origRate.toLocaleString()} × ${foreignAmt.toLocaleString()} = ${origKRW.toLocaleString()} 원
+
+- 새로운 원화 환산 금액 = 새로운 환율 × 외화 금액
+                     = ${newRate.toLocaleString()} × ${foreignAmt.toLocaleString()} = ${newKRW.toLocaleString()} 원
+
+- 원화 증감액 = 새로운 원화 금액 - 기존 원화 금액
+             = ${newKRW.toLocaleString()} - ${origKRW.toLocaleString()} = ${diffSign}${diffAbs.toLocaleString()} 원
+
+- 증감율(%) = (원화 증감액 / 기존 원화 금액) × 100
+           = (${diff.toFixed(2)} / ${origKRW.toFixed(2)}) × 100 = ${diffPercent.toFixed(2)}%
+
+결과
+→ ${diffSign}${diffAbs.toLocaleString()} 원 (${diffPercent.toFixed(2)}%)
+→ 원화 기준으로 ${diffSign === '+' ? '이익' : (diffSign === '-' ? '손실' : '변화 없음')}이 발생합니다.
+`;
+      document.getElementById('process').innerText = processText;
+    }
+  </script>
+</head>
+<body onload="showForm()">
+  <div class="container">
+    <h2>변동 환율 계산기</h2>
+
+    <fieldset>
+      <legend>계산 유형 선택</legend>
+      <label>
+        <input type="radio" name="calcType" value="type1" checked onclick="showForm()" />
+        유형 1: 환율 변동에 따른 구매량 계산
+      </label>
+      <label>
+        <input type="radio" name="calcType" value="type2" onclick="showForm()" />
+        유형 2: 환율 변동에 따른 원화 이익/손실 계산
+      </label>
+    </fieldset>
+
+    <form id="formType1">
+      <fieldset>
+        <legend>값 입력</legend>
+        <label>개당 물건 가격 (외화 단위): 
+          <input type="number" id="unitPrice" placeholder="" min="0" step="0.0001" oninput="clearOutputs()" />
+        </label>
+        <label>기존 구매 개수 (개): 
+          <input type="number" id="oldQty" placeholder="" min="0" step="1" oninput="clearOutputs()" />
+        </label>
+        <label>기존 환율 (원/외화 단위): 
+          <input type="number" id="prevRate1" placeholder="" min="0" step="0.01" oninput="clearOutputs()" />
+        </label>
+        <label>새로운 환율 (원/외화 단위): 
+          <input type="number" id="newRate1" placeholder="" min="0" step="0.01" oninput="clearOutputs()" />
+        </label>
+      </fieldset>
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+<button type="button" onclick="calculateType1()">계산하기</button>
+<button type="button" onclick="location.href='index.html'" style="background:#666;">메인으로 돌아가기</button>
+</div>
+
+
+    </form>
+
+    <form id="formType2" style="display:none;">
+      <fieldset>
+        <legend>값 입력</legend>
+        <label>외화 금액 (단위): 
+          <input type="number" id="foreignAmt" placeholder="" min="0" step="0.01" oninput="clearOutputs()" />
+        </label>
+        <label>기존 환율 (원/외화 단위): 
+          <input type="number" id="origRate2" placeholder="" min="0" step="0.01" oninput="clearOutputs()" />
+        </label>
+        <label>새로운 환율 (원/외화 단위): 
+          <input type="number" id="newRate2" placeholder="" min="0" step="0.01" oninput="clearOutputs()" />
+        </label>
+      </fieldset>
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+<button type="button" onclick="calculateType2()">계산하기</button>
+<button type="button" onclick="location.href='index.html'" style="background:#666;">메인으로 돌아가기</button>
+
+</div>
+
+
+
+    </form>
+
+    <pre id="process"></pre>
+  </div>
+</body>
+</html>

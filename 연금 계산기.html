@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>연금 현재가치 계산기</title>
+  <style>
+  body {
+    font-family: 'Malgun Gothic', Arial, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 540px;
+    margin: 40px auto 0 auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px #0002;
+    padding: 32px 22px 24px 22px;
+  }
+  h2 {
+    text-align: center;
+    color: #222;
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+  }
+  fieldset {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px #b0bec540;
+    background: #fafbfc;
+    margin-bottom: 28px;
+    padding: 22px 18px 18px 18px;
+    position: relative;
+  }
+  legend {
+    font-size: 1.08em;
+    font-weight: bold;
+    color: #222;
+    margin-bottom: 10px;
+    padding: 0 8px;
+  }
+  label {
+    display: block;
+    margin-top: 13px;
+    font-size: 1.05em;
+    color: #333;
+  }
+  input[type=number] {
+    width: 180px;
+    padding: 7px 10px;
+    font-size: 1.05em;
+    border: 1.5px solid #b0bec5;
+    border-radius: 7px;
+    margin-top: 4px;
+    background: #f9f9f9;
+    transition: border-color 0.2s;
+  }
+  input[type=number]:focus {
+    border-color: #888;
+    outline: none;
+    background: #f3f3f3;
+  }
+  input[type=radio], input[type=checkbox] {
+    accent-color: #444;
+    margin-right: 5px;
+    transform: scale(1.1);
+  }
+  .btn-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+  }
+  button {
+    padding: 10px 25px;
+    font-size: 1.08em;
+    font-weight: bold;
+    color: #fff;
+    background: #444;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px #4442;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 1px;
+    display: block;
+    margin: 0 auto;
+    margin-top: 20px;
+  }
+  button:hover {
+    background: #222;
+    transform: translateY(-2px) scale(1.03);
+  }
+  #result {
+    font-weight: bold;
+    margin-top: 18px;
+    font-size: 1.18em;
+    color: #222;
+    background: #f3f3f3;
+    border-radius: 7px;
+    padding: 10px 0 10px 0;
+    text-align: center;
+    box-shadow: 0 1px 4px #4441;
+  }
+  pre {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    padding: 13px 10px;
+    white-space: pre-line;
+    margin-top: 15px;
+    border-radius: 6px;
+    font-size: 1em;
+    color: #444;
+    box-shadow: 0 1px 4px #4441;
+  }
+  @media (max-width: 480px) {
+    .container {
+      max-width: 98vw;
+      padding: 10px 2vw 16px 2vw;
+    }
+    input[type=number] {
+      width: 98vw;
+      max-width: 98vw;
+    }
+  }
+  </style>
+  <script>
+    function roundN(val, digits) {
+      const factor = Math.pow(10, digits);
+      return Math.round(val * factor) / factor;
+    }
+
+    function calculate() {
+      let A0 = parseFloat(document.getElementById('A0').value);
+      let A  = parseFloat(document.getElementById('A').value);
+      let rPercent = parseFloat(document.getElementById('r').value);
+      let n  = parseFloat(document.getElementById('n').value);
+      const type = document.querySelector('input[name="annuityType"]:checked').value;
+      const round2 = document.getElementById('round2').checked;
+      const roundDigits = round2 ? 2 : 1;
+
+      let vars = [A0, A, rPercent, n];
+      let count = vars.filter(x => !isNaN(x)).length;
+      if (count !== 3) {
+        alert('4개 중 3개만 입력하세요! (나머지 1개를 계산)');
+        return;
+      }
+
+      let process = '';
+      try {
+        let r = isNaN(rPercent) ? NaN : rPercent / 100;
+
+        // 어떤 값을 구하는 상황인지 판단
+        const isAcalc = isNaN(A) && !isNaN(A0) && !isNaN(r) && !isNaN(n);
+
+        // roundPower: true면 (1+r)^n 반올림, false면 (1+r)^–n 반올림
+        let roundPowerInsteadOfInverse = isAcalc ? true : false;
+
+        //------ 주기초 ------
+        if (type === 'begin') {
+          if (isNaN(A0)) {
+            // 그대로: (1+r)^–n 반올림
+            let powerInv = Math.pow(1 + r, -n);
+            let powerInvRounded = roundN(powerInv, roundDigits);
+            let frac = (1 - powerInvRounded) / r;
+            let A0_calc = A * frac * (1 + r);
+
+            process =
+`주기초(기시급) 연금 현재가치 공식:
+A₀ = [A × {1 - (1+r)^-n} / r] × (1+r)
+입력값:
+- A = ${A}
+- r = ${r} (${rPercent}%)
+- n = ${n}
+반올림: (1+r)^-n = ${powerInv.toFixed(8)} → 소수 ${roundDigits}째 자리 반올림: ${powerInvRounded}
+(1 - (1+r)^-n) / r = (1 - ${powerInvRounded}) / ${r} = ${(1 - powerInvRounded) / r}
+A₀ = ${A} × ${(1 - powerInvRounded) / r} × ${1 + r} = ${A0_calc.toFixed(4)}
+`;
+            A0 = A0_calc;
+          } else if (isAcalc) {
+            // (A_0, r, n) 입력 시 A 계산: (1+r)^n을 소수 자리 반올림해서 사용 (요구사항)
+            let power = Math.pow(1 + r, n);
+            let powerRounded = roundN(power, roundDigits);
+            let powerInvRounded = 1 / powerRounded;
+            let frac = (1 - powerInvRounded) / r;
+            let A_calc = A0 / (frac * (1 + r));
+
+            process =
+`주기초(기시급) 연금 현재가치 공식:
+A₀ = [A × {1 - (1+r)^-n} / r] × (1+r)
+입력값:
+- A₀ = ${A0}
+- r = ${r} (${rPercent}%)
+- n = ${n}
+(1+r)^n = ${power.toFixed(8)} → 소수 ${roundDigits}째 자리 반올림: ${powerRounded}
+(1+r)^-n(approx) = 1 / ${powerRounded} = ${powerInvRounded}
+(1 - (1+r)^-n) / r = (1 - ${powerInvRounded}) / ${r} = ${(1 - powerInvRounded) / r}
+A = A₀ / [ {(1 - (1+r)^-n)/r} × (1+r) ] 
+  = ${A0} / [ ${(1 - powerInvRounded) / r} × ${1 + r} ] = ${A_calc.toFixed(4)}
+`;
+            A = A_calc;
+          } else if (isNaN(r)) {
+            // r을 수치해법(이진탐색)으로 계산
+            let target = A0, a = A, nn = n;
+            let low = 0.000001, high = 1, mid, f, iter = 0;
+            while (high - low > 1e-7 && iter < 100) {
+              mid = (low + high) / 2;
+              let powerInv = Math.pow(1 + mid, -nn);
+              let powerInvRounded = roundN(powerInv, roundDigits);
+              let frac = (1 - powerInvRounded) / mid;
+              f = a * frac * (1 + mid) - target;
+              if (f > 0) high = mid;
+              else low = mid;
+              iter++;
+            }
+            let r_calc = mid, rP_calc = r_calc * 100;
+            let powerInv = Math.pow(1 + r_calc, -n);
+            let powerInvRounded = roundN(powerInv, roundDigits);
+            process =
+`주기초(기시급) 연금 현재가치 공식:
+A₀ = [A × {1 - (1+r)^-n} / r] × (1+r)
+입력값:
+- A₀ = ${A0}
+- A = ${A}
+- n = ${n}
+수치적 탐색으로 r 반복계산
+구한 r = ${r_calc.toFixed(8)} (즉, ${rP_calc.toFixed(4)}%)
+(1+r)^-n = ${powerInv.toFixed(8)} → ${powerInvRounded}
+`;
+            r = r_calc;
+            rPercent = rP_calc;
+          } else if (isNaN(n)) {
+            // n 수치해법(이진탐색)
+            let target = A0, a = A, rr = r;
+            let low = 0.00001, high = 100, mid, f, iter = 0;
+            while (high - low > 1e-7 && iter < 100) {
+              mid = (low + high) / 2;
+              let powerInv = Math.pow(1 + rr, -mid);
+              let powerInvRounded = roundN(powerInv, roundDigits);
+              let frac = (1 - powerInvRounded) / rr;
+              f = a * frac * (1 + rr) - target;
+              if (f > 0) high = mid;
+              else low = mid;
+              iter++;
+            }
+            let n_calc = mid;
+            let powerInv = Math.pow(1 + r, -n_calc);
+            let powerInvRounded = roundN(powerInv, roundDigits);
+            process =
+`주기초(기시급) 연금 현재가치 공식:
+A₀ = [A × {1 - (1+r)^-n} / r] × (1+r)
+입력값:
+- A₀ = ${A0}
+- A = ${A}
+- r = ${r} (${rPercent}%)
+수치적 탐색으로 n 반복계산
+구한 n = ${n_calc.toFixed(4)}
+(1+r)^-n = ${powerInv.toFixed(8)} → ${powerInvRounded}
+`;
+            n = n_calc;
+          }
+        }
+        //------ 주기말 ------
+        else {
+          if (isNaN(A0)) {
+            // 그대로: (1+r)^–n 반올림
+            let powerInv = Math.pow(1 + r, -n);
+            let powerInvRounded = roundN(powerInv, roundDigits);
+            let frac = (1 - powerInvRounded) / r;
+            let A0_calc = A * frac;
+
+            process =
+`주기말(기말급) 연금 현재가치 공식:
+A₀ = A × {1 - (1+r)^-n} / r
+입력값:
+- A = ${A}
+- r = ${r} (${rPercent}%)
+- n = ${n}
+반올림: (1+r)^-n = ${powerInv.toFixed(8)} → 소수 ${roundDigits}째 자리 반올림: ${powerInvRounded}
+(1 - (1+r)^-n) / r = (1 - ${powerInvRounded}) / ${r} = ${(1 - powerInvRounded) / r}
+A₀ = ${A} × ${(1 - powerInvRounded) / r} = ${A0_calc.toFixed(4)}
+`;
+            A0 = A0_calc;
+          } else if (isAcalc) {
+            // (A_0, r, n) 입력 시 A 계산: (1+r)^n을 소수 자리 반올림해서 사용 (요구사항)
+            let power = Math.pow(1 + r, n);
+            let powerRounded = roundN(power, roundDigits);
+            let powerInvRounded = 1 / powerRounded;
+            let frac = (1 - powerInvRounded) / r;
+            let A_calc = A0 / frac;
+
+            process =
+`주기말(기말급) 연금 현재가치 공식:
+A₀ = A × {1 - (1+r)^-n} / r
+입력값:
+- A₀ = ${A0}
+- r = ${r} (${rPercent}%)
+- n = ${n}
+(1+r)^n = ${power.toFixed(8)} → 소수 ${roundDigits}째 자리 반올림: ${powerRounded}
+(1+r)^-n(approx) = 1 / ${powerRounded} = ${powerInvRounded}
+(1 - (1+r)^-n) / r = (1 - ${powerInvRounded}) / ${r} = ${(1 - powerInvRounded) / r}
+A = A₀ / {(1 - (1+r)^-n)/r} = ${A0} / ${(1 - powerInvRounded) / r} = ${A_calc.toFixed(4)}
+`;
+            A = A_calc;
+          } else if (isNaN(r)) {
+            let target = A0, a = A, nn = n;
+            let low = 0.000001, high = 1, mid, f, iter = 0;
+            while (high - low > 1e-7 && iter < 100) {
+              mid = (low + high) / 2;
+              let powerInv = Math.pow(1 + mid, -nn);
+              let powerInvRounded = roundN(powerInv, roundDigits);
+              let frac = (1 - powerInvRounded) / mid;
+              f = a * frac - target;
+              if (f > 0) high = mid;
+              else low = mid;
+              iter++;
+            }
+            let r_calc = mid, rP_calc = r_calc * 100;
+            let powerInv = Math.pow(1 + r_calc, -n);
+            let powerInvRounded = roundN(powerInv, roundDigits);
+            process =
+`주기말(기말급) 연금 현재가치 공식:
+A₀ = A × {1 - (1+r)^-n} / r
+입력값:
+- A₀ = ${A0}
+- A = ${A}
+- n = ${n}
+수치적 탐색으로 r 반복계산
+구한 r = ${r_calc.toFixed(8)} (즉, ${rP_calc.toFixed(4)}%)
+(1+r)^-n = ${powerInv.toFixed(8)} → ${powerInvRounded}
+`;
+            r = r_calc;
+            rPercent = rP_calc;
+          } else if (isNaN(n)) {
+            let target = A0, a = A, rr = r;
+            let low = 0.00001, high = 100, mid, f, iter = 0;
+            while (high - low > 1e-7 && iter < 100) {
+              mid = (low + high) / 2;
+              let powerInv = Math.pow(1 + rr, -mid);
+              let powerInvRounded = roundN(powerInv, roundDigits);
+              let frac = (1 - powerInvRounded) / rr;
+              f = a * frac - target;
+              if (f > 0) high = mid;
+              else low = mid;
+              iter++;
+            }
+            let n_calc = mid;
+            let powerInv = Math.pow(1 + r, -n_calc);
+            let powerInvRounded = roundN(powerInv, roundDigits);
+            process =
+`주기말(기말급) 연금 현재가치 공식:
+A₀ = A × {1 - (1+r)^-n} / r
+입력값:
+- A₀ = ${A0}
+- A = ${A}
+- r = ${r} (${rPercent}%)
+수치적 탐색으로 n 반복계산
+구한 n = ${n_calc.toFixed(4)}
+(1+r)^-n = ${powerInv.toFixed(8)} → ${powerInvRounded}
+`;
+            n = n_calc;
+          }
+        }
+
+        // 최종 출력
+        let res =
+`계산 결과:
+현재가치 A₀ = ${A0.toFixed(4)} 원
+연금 지급액 A = ${A.toFixed(4)} 원
+이율 r = ${rPercent.toFixed(4)} %
+기간 n = ${n.toFixed(4)} 년`;
+
+        document.getElementById('result').innerText = res;
+        document.getElementById('process').innerText = process;
+
+      } catch(e) {
+        alert('계산 실패: ' + e.message);
+        document.getElementById('result').innerText = '';
+        document.getElementById('process').innerText = '';
+      }
+    }
+
+    function clearOutputs() {
+      document.getElementById('result').innerText = '';
+      document.getElementById('process').innerText = '';
+    }
+  </script>
+</head>
+<body>
+    <div class="container">
+  <h2>연금 현재가치 계산기</h2>
+  <fieldset>
+    <legend>연금 종류 선택</legend>
+    <label><input type="radio" name="annuityType" value="begin" checked /> 주기초 연금(기시급)</label>
+    <label><input type="radio" name="annuityType" value="end" /> 주기말 연금(기말급)</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>값 입력 </legend>
+    <label>현재가치 A₀ (원): 
+      <input type="number" id="A0" min="0" step="0.0001" oninput="clearOutputs()" />
+    </label>
+    <label>연금 1회 지급액 A (원): 
+      <input type="number" id="A" min="0" step="0.0001" oninput="clearOutputs()" />
+    </label>
+    <label>이율 r (%): 
+      <input type="number" id="r" min="0" step="0.0001" oninput="clearOutputs()" />
+    </label>
+    <label>기간 n : 
+      <input type="number" id="n" min="0.0001" step="0.0001" oninput="clearOutputs()" />
+    </label>
+  </fieldset>
+
+  <label>
+    <input type="checkbox" id="round2" checked />
+    (1+r)<sup>n</sup> 값을 <b>소수 둘째 자리</b>로 반올림<br>
+    <span style="margin-left:22px;">(체크 해제 시 <b>소수 첫째 자리</b> 반올림)
+  </label>
+  <br><br>
+<div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 18px;">
+  <button onclick="calculate()">계산하기</button>
+  <button onclick="location.href='index.html'" style="background:#666;">메인으로 돌아가기</button>
+</div>
+  <div id="result"></div>
+  <pre id="process"></pre>
+</body>
+</html>
